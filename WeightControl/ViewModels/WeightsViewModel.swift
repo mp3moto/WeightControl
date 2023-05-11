@@ -1,5 +1,7 @@
 import Foundation
 
+typealias Binding<T> = (T) -> Void
+
 final class WeightsViewModel {
     var onWeightsUpdate: (() -> Void)?
     var model: WeightsModelProtocol
@@ -15,6 +17,9 @@ final class WeightsViewModel {
             updateWeights()
         }
     }
+    
+    var onInputValidStateChange: Binding<Bool>?
+    
     private var weightViewModels = [WeightViewModel]() {
         didSet {
             onWeightsUpdate?()
@@ -56,9 +61,7 @@ final class WeightsViewModel {
     }
     
     func addWeight(weight: Float, date: Date) {
-        guard let convertionK = convertionK,
-              weight > 0
-        else { return }
+        guard let convertionK = convertionK else { return }
         model.addWeight(weight: weight / convertionK, date: date)
     }
     
@@ -68,14 +71,25 @@ final class WeightsViewModel {
     }
     
     func editWeight(indexPath: IndexPath, weight: Float, date: Date) {
-        guard let convertionK = convertionK,
-              weight > 0
-        else { return }
+        guard let convertionK = convertionK else { return }
         model.editWeight(indexPath: indexPath, weight: weight / convertionK, date: date)
         updateWeights()
     }
     
     func getWeight(indexPath: IndexPath) -> Weight {
         model.getWeights()[indexPath.row]
+    }
+    
+    func didEnter(_ value: String) {
+        let result = model.didEnter(value)
+        
+        switch result {
+        
+        case .success(let inputValid):
+            onInputValidStateChange?(inputValid)
+        
+        case .failure(_):
+            onInputValidStateChange?(false)
+        }
     }
 }

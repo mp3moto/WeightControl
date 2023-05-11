@@ -39,4 +39,22 @@ final class WeightsStore: WeightsModelProtocol {
         
         try? dataStore.saveRecord(object: record)
     }
+    
+    func didEnter(_ value: String) -> Result<Bool, Error> {
+        do {
+            try validate(value)
+        } catch {
+            return .failure(error)
+        }
+        return .success(true)
+    }
+    
+    private func validate(_ string: String?) throws {
+        guard let string = string,
+              let value = string.floatValue,
+              value > 0
+        else {
+            throw InputError.invalidValue
+        }
+    }
 }
