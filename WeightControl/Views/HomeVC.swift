@@ -69,7 +69,7 @@ class HomeVC: UIViewController {
     private let historyTable = ContentSizedTableView()
     
     private let addButton: UIButton = {
-        let button = UIButton()
+        let button = WCHNGButton()
         button.setImage(UIImage(named: "add"), for: .normal)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
@@ -356,24 +356,23 @@ extension HomeVC: UITableViewDataSource, UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
-        let editAction = UIContextualAction(style: .normal, title: "Ред.") { [weak self] (action, view, completionHandler) in
-            guard let viewModel = self?.viewModel else { completionHandler(false); return }
-            let vc = WeightVC(viewModel: viewModel)
-            vc.editWeightIndexPath = indexPath
-            vc.completion = { [weak self] in
-                viewModel.updateWeights()
-                self?.showToast(message: "Изменения сохранены")
-                self?.dismiss(animated: true)
-            }
-            self?.present(vc, animated: true)
-            completionHandler(true)
-        }
-        
         let deleteAction = UIContextualAction(style: .destructive, title: "Удалить") { [weak self] (action, view, completionHandler) in
             self?.deleteWeight(indexPath: indexPath)
             completionHandler(true)
         }
         
-        return UISwipeActionsConfiguration(actions: [deleteAction, editAction])
+        return UISwipeActionsConfiguration(actions: [deleteAction,/* editAction*/])
+    }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        guard let viewModel = viewModel else { return }
+        let vc = WeightVC(viewModel: viewModel)
+        vc.editWeightIndexPath = indexPath
+        vc.completion = { [weak self] in
+            viewModel.updateWeights()
+            self?.showToast(message: "Изменения сохранены")
+            self?.dismiss(animated: true)
+        }
+        present(vc, animated: true)
     }
 }

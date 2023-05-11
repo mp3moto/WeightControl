@@ -65,9 +65,8 @@ class WeightVC: UIViewController {
     }()
     private let weightRowLabel = UILabel().customStyle(style: .weightUnits, text: "")
     private let addButton: UIButton = {
-        let button = UIButton()
+        let button = WCHNGButton()
         button.translatesAutoresizingMaskIntoConstraints = false
-        button.backgroundColor = UIColor().getProjectUIColor(color: .wchngPurple)
         button.layer.cornerRadius = 10
         button.titleLabel?.font = UIFont().getCustomFont(font: .SFProTextMedium, size: 17)
         button.setTitleColor(.white, for: .normal)
@@ -150,9 +149,20 @@ class WeightVC: UIViewController {
             addButton.setTitle("Добавить", for: .normal)
         }
         
+        if let _ = editWeightIndexPath {
+            setAddButton(enabled: true)
+        } else {
+            setAddButton(enabled: false)
+        }
+        
         addButton.addTarget(self, action: #selector(addWeight), for: .touchUpInside)
         dateRowValue.addTarget(self, action: #selector(showDatePicker), for: .touchUpInside)
         datePicker.addTarget(self, action: #selector(updateDateRowValue), for: .allEvents)
+        weightValue.addTarget(self, action: #selector(textFieldDidChange), for: .editingChanged)
+        
+        viewModel.onInputValidStateChange = { [weak self] isInputValid in
+            self?.setAddButton(enabled: isInputValid)
+        }
     }
     
     private func setupConstraints() {
@@ -203,7 +213,6 @@ class WeightVC: UIViewController {
             datePickerView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             datePickerView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
             datePickerConstraint,
-            //datePickerView.heightAnchor.constraint(equalToConstant: 0),
             
             datePicker.topAnchor.constraint(equalTo: datePickerView.topAnchor),
             datePicker.leadingAnchor.constraint(equalTo: datePickerView.leadingAnchor),
@@ -242,6 +251,11 @@ class WeightVC: UIViewController {
         ])
     }
     
+    private func setAddButton(enabled: Bool) {
+        addButton.isUserInteractionEnabled = enabled
+        addButton.isEnabled = enabled
+    }
+    
     @objc private func keyboardWillShow(_ notification : Notification?) -> Void {
         var _kbSize:CGSize!
         if let info = notification?.userInfo {
@@ -261,10 +275,7 @@ class WeightVC: UIViewController {
     }
     
     @objc private func addWeight() {
-        guard let weight = weightValue.text,
-              let weight = weight.floatValue,
-              weight > 0
-        else { return }
+        guard let weight = weightValue.text?.floatValue else { return }
         if let editWeightIndexPath = editWeightIndexPath {
             viewModel.editWeight(indexPath: editWeightIndexPath, weight: weight, date: datePicker.date)
         } else {
@@ -286,6 +297,12 @@ class WeightVC: UIViewController {
     
     @objc private func updateDateRowValue() {
         dateRowValue.setTitle(datePicker.date.displayDate(), for: .normal)
+    }
+    
+    @objc
+    private func textFieldDidChange() {
+        guard let text = weightValue.text else { return }
+        viewModel.didEnter(text)
     }
 }
 
